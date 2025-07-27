@@ -1,0 +1,22 @@
+{
+  "ruta_aprendizaje_programacion": [
+    {
+      "nivel": "1 - Fundamentos de Programación",
+      "temas": ["Variables y tipos de datos", "Operadores", "Estructuras de control", "Funciones básicas"],
+      "objetivos": [
+        "Entender conceptos básicos de programación",
+        "Escribir programas simples",
+        "Usar variables y operadores correctamente"
+      ],
+      "herramientas": ["Visual Studio Code", "Python", "Git"],
+      "recursos": ["https://python.org", "https://code.visualstudio.com", "https://git-scm.com"]
+    },
+    {
+      "nivel": "2 - Estructuras de Datos",
+      "temas": ["Listas y arrays", "Diccionarios", "Tuplas", "Conjuntos"],
+      "objetivos": ["Manejar colecciones de datos", "Optimizar el código", "Elegir la estructura correcta"],
+      "herramientas": ["Python", "Jupyter Notebook"],
+      "recursos": ["https://jupyter.org", "Documentación de Python"]
+    }
+  ]
+}

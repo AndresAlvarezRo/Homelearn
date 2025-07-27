@@ -1,0 +1,133 @@
+{
+  "ruta_aprendizaje_ciberseguridad": [
+    {
+      "nivel": "1 - Fundamentos de Redes",
+      "temas": [
+        "Modelo OSI y TCP/IP",
+        "Direccionamiento IP (IPv4/IPv6)",
+        "Subnetting",
+        "Protocolos comunes (HTTP, HTTPS, FTP, DNS, DHCP)",
+        "Firewall y NAT",
+        "Wireshark básico"
+      ],
+      "objetivos": [
+        "Comprender cómo fluye la información en una red",
+        "Aprender a analizar tráfico de red",
+        "Establecer una base para detectar anomalías"
+      ],
+      "herramientas": ["Wireshark", "Cisco Packet Tracer", "GNS3"],
+      "recursos": [
+        "https://www.cloudflare.com/learning/ddos/glossary/open-systems-interconnection-model-osi/",
+        "Curso gratuito en Networking de Cisco: https://www.netacad.com/"
+      ]
+    },
+    {
+      "nivel": "2 - Fundamentos de Sistemas Operativos",
+      "temas": [
+        "Linux para seguridad (CLI, servicios, permisos)",
+        "Windows Internals",
+        "Scripting en Bash y PowerShell",
+        "Administración de usuarios y servicios"
+      ],
+      "objetivos": [
+        "Dominar ambientes de trabajo para pentesting o análisis forense",
+        "Automatizar tareas de análisis o hardening"
+      ],
+      "herramientas": ["Kali Linux", "Windows Sysinternals", "Bash", "PowerShell"],
+      "recursos": ["https://overapi.com/linux", "https://learn.microsoft.com/en-us/sysinternals/"]
+    },
+    {
+      "nivel": "3 - Ciberseguridad Básica",
+      "temas": [
+        "Tipos de amenazas (malware, phishing, ransomware)",
+        "Ciclo de vida de ataques",
+        "Modelos de seguridad (CIA, Zero Trust)",
+        "Autenticación y control de acceso"
+      ],
+      "objetivos": ["Reconocer los vectores de ataque más comunes", "Comprender buenas prácticas de protección"],
+      "herramientas": ["Kali Linux", "Metasploit", "Burp Suite"],
+      "recursos": ["https://tryhackme.com/", "https://owasp.org/www-project-top-ten/"]
+    },
+    {
+      "nivel": "4 - Pentesting y Hacking Ético",
+      "temas": [
+        "Reconocimiento (Nmap, OSINT)",
+        "Escaneo de vulnerabilidades",
+        "Explotación y post-explotación",
+        "Red Team vs Blue Team"
+      ],
+      "objetivos": ["Simular ataques para evaluar vulnerabilidades", "Comprender técnicas reales de intrusión"],
+      "herramientas": ["Nmap", "Nessus", "Metasploit", "Hydra", "Burp Suite", "SQLMap"],
+      "recursos": ["https://www.hackthebox.com/", "https://academy.tcm-sec.com/"]
+    },
+    {
+      "nivel": "5 - Seguridad en Aplicaciones Web",
+      "temas": [
+        "OWASP Top 10",
+        "Cross-Site Scripting (XSS)",
+        "SQL Injection",
+        "Autenticación insegura",
+        "Seguridad en APIs REST"
+      ],
+      "objetivos": ["Detectar y mitigar vulnerabilidades web", "Aplicar buenas prácticas en desarrollo seguro"],
+      "herramientas": ["Burp Suite", "ZAP Proxy", "Postman"],
+      "recursos": ["https://owasp.org/www-project-web-security-testing-guide/", "https://portswigger.net/web-security"]
+    },
+    {
+      "nivel": "6 - Seguridad en Infraestructura y Redes Avanzadas",
+      "temas": [
+        "IDS/IPS (Snort, Suricata)",
+        "Firewalls avanzados (pfSense)",
+        "Seguridad en switches y routers",
+        "Arquitecturas seguras (DMZ, VLANs)"
+      ],
+      "objetivos": [
+        "Implementar seguridad proactiva en infraestructura",
+        "Monitorear y responder ante eventos sospechosos"
+      ],
+      "herramientas": ["Snort", "Suricata", "pfSense", "Splunk"],
+      "recursos": ["https://www.splunk.com/", "https://docs.pfsense.org/"]
+    },
+    {
+      "nivel": "7 - Seguridad en la Nube",
+      "temas": [
+        "Modelos de servicio (IaaS, PaaS, SaaS)",
+        "Buenas prácticas en AWS, Azure, GCP",
+        "IAM (Identity and Access Management)",
+        "Hardening de entornos cloud",
+        "Auditoría y cumplimiento (CIS benchmarks)"
+      ],
+      "objetivos": ["Asegurar despliegues en la nube", "Aplicar políticas de control de acceso y cifrado"],
+      "herramientas": ["AWS IAM", "Azure Security Center", "Terraform", "CloudTrail", "Kubernetes"],
+      "recursos": ["https://cloudacademy.com/", "https://learn.microsoft.com/en-us/security/"]
+    },
+    {
+      "nivel": "8 - Respuesta a Incidentes y Análisis Forense",
+      "temas": [
+        "Detección de incidentes",
+        "Análisis de logs y eventos",
+        "Recuperación y contención",
+        "Chain of Custody",
+        "Forense en sistemas y redes"
+      ],
+      "objetivos": ["Investigar ataques con rigor técnico", "Preservar evidencia digital para análisis"],
+      "herramientas": ["ELK Stack", "Volatility", "Autopsy", "Sysmon"],
+      "recursos": ["https://www.sans.org/", "https://www.cyberdefenders.org/"]
+    },
+    {
+      "nivel": "9 - Inteligencia Artificial aplicada a Ciberseguridad",
+      "temas": [
+        "Machine Learning para detección de anomalías",
+        "Análisis de patrones de ataques",
+        "Detección de malware con IA",
+        "Automatización de respuestas (SOAR)"
+      ],
+      "objetivos": [
+        "Utilizar IA para mejorar la detección y respuesta",
+        "Crear modelos que ayuden a anticipar amenazas"
+      ],
+      "herramientas": ["Python", "Scikit-learn", "TensorFlow", "Elastic Security", "IBM QRadar", "Cortex XSOAR"],
+      "recursos": ["https://www.coursera.org/learn/ai-for-cybersecurity", "https://www.elastic.co/security"]
+    }
+  ]
+}

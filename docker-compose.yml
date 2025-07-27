@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:15-alpine
+    container_name: homelearn_db
+    environment:
+      POSTGRES_DB: homelearn
+      POSTGRES_USER: homelearn_user
+      POSTGRES_PASSWORD: homelearn_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - homelearn_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U homelearn_user -d homelearn"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: homelearn_backend
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_NAME: homelearn
+      DB_USER: homelearn_user
+      DB_PASSWORD: homelearn_pass
+      JWT_SECRET: your_jwt_secret_key_here
+    ports:
+      - "5000:5000"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - homelearn_network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: homelearn_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - homelearn_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  homelearn_network:
+    driver: bridge
