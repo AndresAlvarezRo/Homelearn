@@ -63,10 +63,10 @@ git clone <repository-url>
 cd homelearn
 \`\`\`
 
-2. Run the super deployment script:
+2. Run the start deployment script:
 \`\`\`bash
-chmod +x super-deploy.sh
-./super-deploy.sh
+chmod +x start.sh
+./start.sh
 \`\`\`
 
 3. Access the application:

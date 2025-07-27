@@ -150,7 +150,24 @@ class ApiService {
   }
 
   async getCourse(id) {
-    return this.request(`/course/${id}`)
+    console.log("🔍 Fetching course details for ID:", id)
+    const courseData = await this.request(`/course/${id}`)
+    console.log("📋 Course data received:", courseData)
+
+    // Log level data to debug
+    if (courseData.levels) {
+      courseData.levels.forEach((level, index) => {
+        console.log(`📝 Level ${index + 1}:`, {
+          title: level.title,
+          topics: level.topics?.length || 0,
+          objectives: level.objectives?.length || 0,
+          tools: level.tools?.length || 0,
+          resources: level.resources?.length || 0,
+        })
+      })
+    }
+
+    return courseData
   }
 
   async enrollCourse(courseId) {

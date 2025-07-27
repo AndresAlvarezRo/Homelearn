@@ -15,28 +15,29 @@ echo "⏳ Waiting for database to be ready..."
 sleep 10
 
 # Fix admin password and null usernames
-echo "🔐 Fixing admin password and user data..."
+echo "🔐 Corrigiendo contraseña del administrador y datos de usuario..."
 docker exec -i homelearn_db psql -U homelearn_user -d homelearn_db << 'EOF'
--- Fix admin password hash for 'admin123'
+-- Corrige el hash de contraseña del admin para 'admin123'
 UPDATE users 
 SET password_hash = '$2a$12$LQv3c1yqBwEHXk.JCJbCpOuF2qwrAikvfCyHGQ3YGpTkqxec10yz.' 
 WHERE email = 'admin@homelearn.com';
 
--- Fix any users with null usernames
+-- Corrige usuarios con nombre de usuario nulo
 UPDATE users 
-SET username = COALESCE(username, 'User_' || id)
+SET username = COALESCE(username, 'Usuario_' || id)
 WHERE username IS NULL;
 
--- Verify the changes
+-- Verifica los cambios
 SELECT id, username, email, is_admin FROM users;
 EOF
 
-echo "✅ All fixes applied!"
+echo "✅ ¡Todas las correcciones aplicadas!"
 echo ""
-echo "🎉 You can now:"
-echo "   - Login as admin: admin@homelearn.com / admin123"
-echo "   - Upload any course JSON format"
-echo "   - Delete courses you created"
-echo "   - Access admin panel"
+echo "🎉 Ahora puedes:"
+echo "   - Iniciar sesión como admin: admin@homelearn.com / admin123"
+echo "   - Subir cualquier curso en formato JSON"
+echo "   - Eliminar cursos que hayas creado"
+echo "   - Acceder al panel de administración"
 echo ""
-echo "🌐 Open: http://localhost:3000"
+echo "🌐 Abrir: http://localhost:3000"
+
