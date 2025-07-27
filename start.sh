@@ -18,7 +18,7 @@ sleep 10
 echo "🔐 Corrigiendo contraseña del administrador y datos de usuario..."
 docker exec -i homelearn_db psql -U homelearn_user -d homelearn_db << 'EOF'
 -- Corrige el hash de contraseña del admin para 'admin123'
-UPDATE users 
+UPDATE users
 SET password_hash = '$2a$12$LQv3c1yqBwEHXk.JCJbCpOuF2qwrAikvfCyHGQ3YGpTkqxec10yz.' 
 WHERE email = 'admin@homelearn.com';
 
