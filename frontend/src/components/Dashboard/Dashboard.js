@@ -124,7 +124,7 @@ const Dashboard = () => {
         <h1 className="text-3xl font-bold mb-2" style={{ color: theme.colors.text }}>
           ¡Bienvenido, {user?.username}! 👋
         </h1>
-        <p style={{ color: theme.colors.textSecondary }}>Continúa tu viaje de aprendizaje con Homelearn</p>
+        <p style={{ color: theme.colors.textSecondary }}>Hecho con Amor para esta casa llena de sueños.❤️</p>
       </div>
 
       {error && (

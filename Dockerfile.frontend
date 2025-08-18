@@ -1,24 +1,27 @@
+# Dockerfile.frontend
 FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package files
+# Dependencias
 COPY frontend/package*.json ./
-
-# Install dependencies
 RUN npm install
 
-# Copy source code
+# --- Build-time API URL ---
+ARG REACT_APP_API_URL
+# CRA toma las env en build time si tienen prefijo REACT_APP_
+ENV REACT_APP_API_URL=${REACT_APP_API_URL}
+
+# (Opcional) Si tenés un .env.production en el repo, lo copiás:
+# COPY frontend/.env.production ./.env.production
+
+# Código fuente
 COPY frontend/ .
 
-# Build the application
+# Build de producción
 RUN npm run build
 
-# Install serve to run the built app
+# Servidor estático
 RUN npm install -g serve
-
-# Expose port
 EXPOSE 3000
-
-# Start the application
 CMD ["serve", "-s", "build", "-l", "3000"]
