@@ -36,6 +36,11 @@ services:
       DB_USER: homelearn_user
       DB_PASSWORD: homelearn_pass
       JWT_SECRET: your_jwt_secret_key_here
+      # Origen del frontend en la LAN (usa variable para no editar cada vez)
+      FRONTEND_ORIGINS: "http://${HOST_LAN_IP:-192.168.0.6}:3000"
+    volumes:
+      # persiste y expone /uploads usados por el backend
+      - ./uploads:/app/uploads
     ports:
       - "5000:5000"
     depends_on:
@@ -49,6 +54,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      args:
+        # horneado en el build del frontend para apuntar al backend en la LAN
+        REACT_APP_API_URL: "http://${HOST_LAN_IP:-192.168.0.6}:5000/api"
     container_name: homelearn_frontend
     ports:
       - "3000:3000"

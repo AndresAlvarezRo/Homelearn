@@ -16,7 +16,8 @@
     "react-markdown": "^8.0.7",
     "react-syntax-highlighter": "^15.5.0",
     "date-fns": "^2.30.0",
-    "clsx": "^2.0.0"
+    "clsx": "^2.0.0",
+    "@mdi/js": "^7.0.0"
   },
   "scripts": {
     "start": "react-scripts start",
