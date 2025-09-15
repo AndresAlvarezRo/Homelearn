@@ -29,7 +29,7 @@ const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGINS || "")
   .map((s) => s.trim())
   .filter(Boolean);
 
-const DEFAULT_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"];
+const DEFAULT_ORIGINS = ["http://192.168.0.6:3000", "http://127.0.0.1:3000"];
 // Acepta http/https y rangos 10.x, 172.16-31.x, 192.168.x
 const LAN_REGEX =
   /^https?:\/\/(?:(?:10\.\d{1,3}\.\d{1,3}\.\d{1,3})|(?:192\.168\.\d{1,3}\.\d{1,3})|(?:172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}))(?::\d{2,5})?$/;
@@ -701,7 +701,7 @@ app.use("*", (req, res) => {
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Advanced Homelearn Server running on port ${PORT}`);
   console.log(`📚 Features: Auth, Courses, Social, Admin, Real-time`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🔗 Health check: http://192.168.0.6:${PORT}/api/health`);
 });
 
 // Graceful shutdown

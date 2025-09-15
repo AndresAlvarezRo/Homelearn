@@ -1,125 +1,70 @@
-# homelearn - Learning Roadmap Management System
 
-A comprehensive web application for managing learning roadmaps and courses, built with a mobile-first approach and designed for easy deployment via Docker.
+# Homelearn - Plataforma de Rutas de Aprendizaje
 
-## 🚀 Features
+Aplicación web para crear, gestionar y seguir cursos por niveles. Pensada para uso educativo, autoaprendizaje y administración sencilla desde cualquier dispositivo.
 
-### Core Functionality
-- **Course Management**: Create, edit, and delete courses with multiple levels
-- **Progress Tracking**: Track completion status for each course level
-- **User Authentication**: Secure registration and login system
-- **Admin Panel**: Administrative interface for course and user management
-- **Mobile-First Design**: Fully responsive interface optimized for smartphones
 
-### Technical Features
-- **Docker Deployment**: Complete containerized stack with docker-compose
-- **RESTful API**: Comprehensive backend API with logging
-- **Database Persistence**: PostgreSQL with persistent volumes
-- **System Logging**: Complete audit trail of all system actions
-- **File Upload**: JSON course import functionality
+## 🚀 Funcionalidades
 
-## 📱 Mobile Experience
+- Registro y login de usuarios
+- Creación y edición de cursos por niveles
+- Seguimiento de progreso por usuario y nivel
+- Panel de administración para gestionar usuarios y cursos
+- Subida de cursos en formato JSON
+- Optimizado para móviles y escritorio
 
-The application is designed mobile-first with:
-- Responsive navigation optimized for touch
-- Mobile-friendly forms and interfaces
-- Optimized loading and performance
-- Touch-friendly buttons and interactions
-- Bottom navigation for easy thumb access
 
-## 🛠 Technology Stack
+## 📱 Experiencia Móvil
 
-### Frontend
-- **React 18** - Modern React with hooks
-- **React Router** - Client-side routing
-- **Tailwind CSS** - Utility-first CSS framework
-- **Lucide React** - Beautiful icons
-- **Axios** - HTTP client
+Interfaz responsiva, navegación simple, botones grandes y formularios adaptados para uso táctil.
 
-### Backend
-- **Node.js** - JavaScript runtime
-- **Express.js** - Web framework
-- **PostgreSQL** - Relational database
-- **JWT** - Authentication tokens
-- **Winston** - Logging framework
-- **Multer** - File upload handling
 
-### Infrastructure
-- **Docker** - Containerization
-- **Docker Compose** - Multi-container orchestration
-- **Nginx** - Reverse proxy (optional)
+## 🛠 Tecnologías
 
-## 🚀 Quick Start
+- Frontend: React, Tailwind CSS
+- Backend: Node.js, Express, PostgreSQL
+- Seguridad: JWT, bcrypt, Helmet
+- Infraestructura: Docker y Docker Compose
 
-### Prerequisites
-- Docker and Docker Compose installed
-- Git (to clone the repository)
 
-### One-Command Deployment
+## 🚀 Inicio Rápido
 
-1. Clone the repository:
-\`\`\`bash
-git clone <repository-url>
-cd homelearn
-\`\`\`
+1. Clona el repositorio:
+  ```bash
+  git clone <url-del-repo>
+  cd homelearn
+  ```
+2. Ejecuta el script de inicio:
+  ```bash
+  ./start.sh
+  ```
+3. Accede desde tu navegador:
+  - Frontend: http://192.168.0.6:3000
+  - Backend: http://192.168.0.6:5000/api
 
-2. Run the start deployment script:
-\`\`\`bash
-chmod +x start.sh
-./start.sh
-\`\`\`
 
-3. Access the application:
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5000/api
-- **Admin Login**: admin@homelearn.com / admin123
-
-## 📋 Course Structure
-
-Courses are organized in levels, each containing:
-
-- **Topics**: Key subjects covered in the level
-- **Objectives**: Learning goals and outcomes
-- **Tools**: Software and tools used
-- **Resources**: Links and references
-
-### Sample JSON Structure
-\`\`\`json
+### Ejemplo de curso (JSON)
+```json
 {
-  "title": "Course Title",
-  "description": "Course description",
+  "title": "Nombre del curso",
+  "description": "Descripción opcional",
   "levels": [
     {
-      "level": "1 - Level Name",
-      "topics": ["Topic 1", "Topic 2"],
-      "objectives": ["Objective 1", "Objective 2"],
-      "tools": ["Tool 1", "Tool 2"],
-      "resources": ["https://example.com", "Resource 2"]
+      "nivel": "Nivel 1",
+      "topics": ["Tema 1", "Tema 2"],
+      "objectives": ["Objetivo 1"],
+      "tools": ["Herramienta 1"],
+      "resources": ["https://ejemplo.com"]
     }
   ]
 }
-\`\`\`
+```
 
-## 👥 User Roles
 
-### Regular Users
-- Register and login
-- Enroll in courses
-- Track progress through course levels
-- Mark levels as completed
-- View personal dashboard
+## 👥 Roles
 
-### Administrators
-- All user capabilities
-- Create and manage courses
-- Upload courses via JSON
-- View system and database logs
-- Delete courses
-- Access admin panel
-
-## 🔧 Manual Setup (Alternative)
-
-If you prefer manual setup:
+- Usuario: se registra, se inscribe en cursos, marca niveles como completados y ve su progreso.
+- Administrador: puede crear, editar y eliminar cursos, ver usuarios y logs.
 
 ### 1. Environment Setup
 \`\`\`bash
@@ -147,166 +92,84 @@ npm install
 npm start
 \`\`\`
 
-## 📊 API Endpoints
 
-### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
+## 📊 Endpoints principales
 
-### Courses
-- `GET /api/courses` - List all courses
-- `GET /api/courses/:id` - Get course details
-- `POST /api/courses` - Create course (Admin)
-- `DELETE /api/courses/:id` - Delete course (Admin)
-- `POST /api/courses/upload` - Upload course JSON (Admin)
+- POST /api/auth/register — Registro
+- POST /api/auth/login — Login
+- GET /api/courses — Listar cursos
+- POST /api/courses — Crear curso (admin)
+- POST /api/courses/upload — Subir curso JSON (admin)
+- GET /api/my-courses — Cursos inscritos
 
-### User Progress
-- `GET /api/my-courses` - Get enrolled courses
-- `POST /api/courses/:id/enroll` - Enroll in course
-- `POST /api/progress/:levelId` - Update progress
 
-### Admin
-- `GET /api/admin/logs` - System logs
-- `GET /api/admin/db-logs` - Database logs
+## 🗄 Esquema de base de datos
 
-## 🗄 Database Schema
+- users: usuarios
+- courses: cursos
+- course_levels: niveles
+- user_enrollments: inscripciones
+- user_progress: progreso
 
-### Tables
-- `users` - User accounts and authentication
-- `courses` - Course information
-- `course_levels` - Individual course levels
-- `user_enrollments` - User course enrollments
-- `user_progress` - Progress tracking
-- `system_logs` - System activity logs
-- `db_logs` - Database operation logs
 
-## 🔒 Security Features
+## 🔒 Seguridad
 
-- JWT-based authentication
-- Password hashing with bcrypt
-- Rate limiting on API endpoints
-- Input validation and sanitization
-- CORS protection
-- Helmet.js security headers
-- SQL injection prevention
+- Autenticación JWT
+- Contraseñas cifradas
+- Rate limiting
+- Validación de datos
 
-## 📱 Mobile Optimization
 
-- Touch-friendly interface elements
-- Responsive grid layouts
-- Mobile navigation patterns
-- Optimized form inputs
-- Fast loading times
-- Offline-ready architecture
+## 📱 Optimización móvil
 
-## 🐳 Docker Configuration
+Todo funciona bien en celulares y tablets.
 
-### Services
-- **frontend**: React application (port 3000)
-- **backend**: Node.js API (port 5000)
-- **database**: PostgreSQL (port 5432)
 
-### Volumes
-- `postgres_data`: Database persistence
-- `backend_logs`: Application logs
-- `course_uploads`: Uploaded files
+## 🐳 Docker
 
-## 📝 Logging
+Incluye docker-compose para levantar frontend, backend y base de datos.
 
-The application provides comprehensive logging:
 
-### System Logs
-- User authentication events
-- Course management actions
-- API access patterns
-- Error tracking
+## 📝 Logs
 
-### Database Logs
-- Query execution times
-- Connection status
-- Performance metrics
-- Error diagnostics
+Se registran eventos importantes y errores.
 
-## 🔧 Configuration
 
-### Environment Variables
-\`\`\`bash
-# Database
+## 🔧 Configuración rápida
+
+Variables principales:
+```bash
 POSTGRES_DB=homelearn
 POSTGRES_USER=homelearn_user
 POSTGRES_PASSWORD=homelearn_pass
+JWT_SECRET=tu_clave_secreta
+REACT_APP_API_URL=http://192.168.0.6:5000/api
+```
 
-# Backend
-NODE_ENV=production
-JWT_SECRET=your_secret_key
-DB_HOST=database
-DB_PORT=5432
 
-# Frontend
-REACT_APP_API_URL=http://localhost:5000/api
-\`\`\`
+## 🚀 Despliegue
 
-## 🚀 Deployment Options
+Para desarrollo: `docker-compose -f docker-compose.dev.yml up`
+Para producción: `docker-compose up -d`
 
-### Development
-\`\`\`bash
-docker-compose -f docker-compose.dev.yml up
-\`\`\`
 
-### Production
-\`\`\`bash
-docker-compose up -d
-\`\`\`
+## 🔍 Problemas comunes
 
-### Scaling
-\`\`\`bash
-docker-compose up -d --scale backend=3
-\`\`\`
+- Verifica puertos 3000, 5000 y 5432 libres
+- Espera que la base de datos inicie
+- Revisa permisos de carpetas uploads
 
-## 🔍 Troubleshooting
 
-### Common Issues
+## 🤝 Contribuir
 
-1. **Port conflicts**: Ensure ports 3000, 5000, and 5432 are available
-2. **Database connection**: Wait for database to fully initialize
-3. **File permissions**: Ensure upload directories are writable
-4. **Memory issues**: Increase Docker memory allocation if needed
+Haz un fork, crea tu rama, sube cambios y haz PR.
 
-### Logs
-\`\`\`bash
-# View all logs
-docker-compose logs -f
 
-# View specific service logs
-docker-compose logs -f backend
-docker-compose logs -f frontend
-docker-compose logs -f database
-\`\`\`
+## 📄 Licencia
 
-### Health Checks
-- Frontend: http://localhost:3000
-- Backend: http://localhost:5000/api/health
-- Database: `docker-compose exec database pg_isready`
+MIT. Ver archivo LICENSE.
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- Built with modern web technologies
-- Inspired by learning management systems
-- Designed for educational institutions and self-learners
-- Mobile-first approach for accessibility
 
 ---
 
-**homelearn** - Empowering learning through structured roadmaps 🚀
+**Homelearn** - Aprende, gestiona y comparte rutas educativas 🚀

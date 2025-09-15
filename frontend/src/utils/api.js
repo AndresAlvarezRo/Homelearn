@@ -4,7 +4,7 @@
 const FALLBACK_HOST =
   typeof window !== "undefined"
     ? `${window.location.protocol}//${window.location.hostname}:5000`
-    : "http://localhost:5000"
+    : "http://192.168.0.6:5000"
 
 // Base de la API (si hay REACT_APP_API_URL se usa, si no fallback)
 // Normalizamos para quitar slashes finales

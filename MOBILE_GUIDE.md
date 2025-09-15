@@ -14,7 +14,7 @@
 4. **Navega a:** `http://TU_IP:3000` (ej: `http://192.168.1.100:3000`)
 
 ### Opción 2: Conexión Localhost (Solo para pruebas)
-- Si estás probando en el mismo dispositivo: `http://localhost:3000`
+- Si estás probando en el mismo dispositivo: `http://192.168.0.6:3000`
 
 ## 📋 Credenciales de Acceso
 

@@ -15,8 +15,8 @@ const API_HOST =
   (process.env.REACT_APP_API_URL
     ? process.env.REACT_APP_API_URL.replace(/\/api\/?$/, "")
     : typeof window !== "undefined"
-    ? `${window.location.protocol}//${window.location.hostname}:5000`
-    : "http://localhost:5000");
+      ? `${window.location.protocol}//${window.location.hostname}:5000`
+      : "http://192.168.0.6:5000")
 
 // Logo inline que hereda el color con `currentColor`
 const LogoIcon = (props) => (
