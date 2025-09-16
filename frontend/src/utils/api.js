@@ -4,7 +4,7 @@
 const FALLBACK_HOST =
   typeof window !== "undefined"
     ? `${window.location.protocol}//${window.location.hostname}:5000`
-    : "http://localhost:5000"
+    : "http://192.168.0.6:5000"
 
 // Base de la API (si hay REACT_APP_API_URL se usa, si no fallback)
 // Normalizamos para quitar slashes finales
@@ -28,6 +28,13 @@ async function safeJson(response) {
 }
 
 class ApiService {
+  // ---------- Mini-Cursos ----------
+  async uploadMiniCourse(file, levelId) {
+    const formData = new FormData()
+    formData.append("miniCourseFile", file)
+    // El backend espera el levelId en la URL, no en el body
+    return this.requestMultipart(`/levels/${levelId}/mini-course`, formData)
+  }
   constructor() {
     try {
       this.token = typeof window !== "undefined" ? localStorage.getItem("token") : null

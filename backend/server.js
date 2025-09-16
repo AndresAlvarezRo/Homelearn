@@ -29,7 +29,7 @@ const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGINS || "")
   .map((s) => s.trim())
   .filter(Boolean);
 
-const DEFAULT_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"];
+const DEFAULT_ORIGINS = ["http://192.168.0.6:3000", "http://127.0.0.1:3000"];
 // Acepta http/https y rangos 10.x, 172.16-31.x, 192.168.x
 const LAN_REGEX =
   /^https?:\/\/(?:(?:10\.\d{1,3}\.\d{1,3}\.\d{1,3})|(?:192\.168\.\d{1,3}\.\d{1,3})|(?:172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}))(?::\d{2,5})?$/;
@@ -466,6 +466,215 @@ app.delete("/api/courses/:id/unsubscribe", authenticateToken, async (req, res) =
   }
 });
 
+// Get specific course with levels
+app.get("/api/courses/:id", authenticateToken, async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const userId = req.user.id;
+
+    // Get course details
+    const courseQuery = `
+      SELECT 
+        c.*,
+        u.username as created_by_username,
+        EXISTS(SELECT 1 FROM user_enrollments ue WHERE ue.course_id = c.id AND ue.user_id = $1) as is_enrolled
+      FROM courses c
+      LEFT JOIN users u ON c.created_by = u.id
+      WHERE c.id = $2
+    `;
+    const courseResult = await pool.query(courseQuery, [userId, courseId]);
+    
+    if (courseResult.rows.length === 0) {
+      return res.status(404).json({ error: "Course not found" });
+    }
+
+    const course = courseResult.rows[0];
+
+    // Get course levels
+    const levelsQuery = `
+      SELECT 
+        cl.*,
+        EXISTS(SELECT 1 FROM user_progress up WHERE up.level_id = cl.id AND up.user_id = $1) as completed
+      FROM course_levels cl
+      WHERE cl.course_id = $2
+      ORDER BY cl.level_order, cl.level_number
+    `;
+    const levelsResult = await pool.query(levelsQuery, [userId, courseId]);
+    course.levels = levelsResult.rows;
+
+    res.json(course);
+  } catch (err) {
+    console.error("Error fetching course:", err);
+    res.status(500).json({ error: "Failed to fetch course details" });
+  }
+});
+
+// ================= MINI-CURSOS =================
+const parseMiniCourseJson = (raw) => {
+  let data;
+  try { data = typeof raw === "string" ? JSON.parse(raw) : raw; } catch { return null; }
+  if (!data || !data.title || !Array.isArray(data.levels)) return null;
+  return data;
+};
+
+// Crear mini-curso (JSON)
+app.post("/api/levels/:levelId/mini-course", authenticateToken, upload.single("miniCourseFile"), async (req, res) => {
+  try {
+    const levelId = req.params.levelId;
+    let miniCourseData;
+    if (req.file) {
+      const raw = fs.readFileSync(req.file.path, "utf8");
+      miniCourseData = parseMiniCourseJson(raw);
+      try { fs.unlinkSync(req.file.path); } catch {}
+    } else {
+      miniCourseData = parseMiniCourseJson(req.body);
+    }
+    if (!miniCourseData) return res.status(400).json({ error: "Formato de mini-curso inválido" });
+    const { title, description, levels } = miniCourseData;
+    // Solo el creador del curso principal o admin puede agregar
+    const levelRes = await pool.query("SELECT course_id FROM course_levels WHERE id = $1", [levelId]);
+    if (levelRes.rows.length === 0) return res.status(404).json({ error: "Nivel no encontrado" });
+    const courseRes = await pool.query("SELECT created_by FROM courses WHERE id = $1", [levelRes.rows[0].course_id]);
+    if (courseRes.rows.length === 0) return res.status(404).json({ error: "Curso no encontrado" });
+    const isOwner = courseRes.rows[0].created_by === req.user.id;
+    const isAdmin = !!req.user.is_admin;
+    if (!isOwner && !isAdmin) return res.status(403).json({ error: "Solo el creador o admin puede agregar mini-cursos" });
+    // Insertar mini-curso
+    const ins = await pool.query(
+      "INSERT INTO mini_courses (level_id, title, description, created_by) VALUES ($1, $2, $3, $4) RETURNING id",
+      [levelId, title, description || "", req.user.id]
+    );
+    const miniCourseId = ins.rows[0].id;
+    // Insertar niveles del mini-curso
+    for (let i = 0; i < levels.length; i++) {
+      const lv = levels[i] || {};
+      await pool.query(
+        "INSERT INTO mini_course_levels (mini_course_id, level_number, title, topics, objectives, tools, resources, content, level_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+        [
+          miniCourseId,
+          i + 1,
+          lv.nivel || lv.level || lv.title || `Nivel ${i + 1}`,
+          lv.temas || lv.topics || [],
+          lv.objetivos || lv.objectives || [],
+          lv.herramientas || lv.tools || [],
+          lv.recursos || lv.resources || [],
+          JSON.stringify({ topics: lv.temas || lv.topics || [], objectives: lv.objetivos || lv.objectives || [], tools: lv.herramientas || lv.tools || [], resources: lv.recursos || lv.resources || [] }),
+          i + 1,
+        ]
+      );
+    }
+    res.status(201).json({ message: "Mini-curso creado", miniCourseId });
+  } catch (err) {
+    console.error("Mini-course create error:", err);
+    res.status(500).json({ error: "Error al crear mini-curso" });
+  }
+});
+
+// Obtener mini-cursos de un nivel
+app.get("/api/levels/:levelId/mini-courses", authenticateToken, async (req, res) => {
+  try {
+    const levelId = req.params.levelId;
+    const result = await pool.query(
+      `SELECT mc.*, array_agg(mcl.id) as level_ids FROM mini_courses mc LEFT JOIN mini_course_levels mcl ON mc.id = mcl.mini_course_id WHERE mc.level_id = $1 GROUP BY mc.id ORDER BY mc.created_at DESC`,
+      [levelId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Mini-course fetch error:", err);
+    res.status(500).json({ error: "Error al obtener mini-cursos" });
+  }
+});
+
+// Obtener detalle de mini-curso (con niveles)
+app.get("/api/mini-courses/:miniCourseId", authenticateToken, async (req, res) => {
+  try {
+    const miniCourseId = req.params.miniCourseId;
+    const mcRes = await pool.query("SELECT * FROM mini_courses WHERE id = $1", [miniCourseId]);
+    if (mcRes.rows.length === 0) return res.status(404).json({ error: "Mini-curso no encontrado" });
+    const levelsRes = await pool.query("SELECT * FROM mini_course_levels WHERE mini_course_id = $1 ORDER BY level_order", [miniCourseId]);
+    const miniCourse = mcRes.rows[0];
+    miniCourse.levels = levelsRes.rows;
+    res.json(miniCourse);
+  } catch (err) {
+    console.error("Mini-course detail error:", err);
+    res.status(500).json({ error: "Error al obtener mini-curso" });
+  }
+});
+
+// Editar mini-curso (JSON)
+app.put("/api/mini-courses/:miniCourseId", authenticateToken, async (req, res) => {
+  try {
+    const miniCourseId = req.params.miniCourseId;
+    const miniCourseData = parseMiniCourseJson(req.body);
+    if (!miniCourseData) return res.status(400).json({ error: "Formato de mini-curso inválido" });
+    const { title, description, levels } = miniCourseData;
+    // Validar permisos
+    const mcRes = await pool.query("SELECT created_by FROM mini_courses WHERE id = $1", [miniCourseId]);
+    if (mcRes.rows.length === 0) return res.status(404).json({ error: "Mini-curso no encontrado" });
+    const isOwner = mcRes.rows[0].created_by === req.user.id;
+    const isAdmin = !!req.user.is_admin;
+    if (!isOwner && !isAdmin) return res.status(403).json({ error: "Solo el creador o admin puede editar" });
+    // Actualizar título y descripción
+    await pool.query("UPDATE mini_courses SET title = $1, description = $2 WHERE id = $3", [title, description || "", miniCourseId]);
+    // Eliminar niveles previos
+    await pool.query("DELETE FROM mini_course_levels WHERE mini_course_id = $1", [miniCourseId]);
+    // Insertar nuevos niveles
+    for (let i = 0; i < levels.length; i++) {
+      const lv = levels[i] || {};
+      await pool.query(
+        "INSERT INTO mini_course_levels (mini_course_id, level_number, title, topics, objectives, tools, resources, content, level_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+        [
+          miniCourseId,
+          i + 1,
+          lv.nivel || lv.level || lv.title || `Nivel ${i + 1}`,
+          lv.temas || lv.topics || [],
+          lv.objetivos || lv.objectives || [],
+          lv.herramientas || lv.tools || [],
+          lv.recursos || lv.resources || [],
+          JSON.stringify({ topics: lv.temas || lv.topics || [], objectives: lv.objetivos || lv.objectives || [], tools: lv.herramientas || lv.tools || [], resources: lv.recursos || lv.resources || [] }),
+          i + 1,
+        ]
+      );
+    }
+    res.json({ message: "Mini-curso actualizado" });
+  } catch (err) {
+    console.error("Mini-course update error:", err);
+    res.status(500).json({ error: "Error al actualizar mini-curso" });
+  }
+});
+
+// Eliminar mini-curso
+app.delete("/api/mini-courses/:miniCourseId", authenticateToken, async (req, res) => {
+  try {
+    const miniCourseId = req.params.miniCourseId;
+    const mcRes = await pool.query("SELECT created_by FROM mini_courses WHERE id = $1", [miniCourseId]);
+    if (mcRes.rows.length === 0) return res.status(404).json({ error: "Mini-curso no encontrado" });
+    const isOwner = mcRes.rows[0].created_by === req.user.id;
+    const isAdmin = !!req.user.is_admin;
+    if (!isOwner && !isAdmin) return res.status(403).json({ error: "Solo el creador o admin puede eliminar" });
+    await pool.query("DELETE FROM mini_courses WHERE id = $1", [miniCourseId]);
+    res.json({ message: "Mini-curso eliminado" });
+  } catch (err) {
+    console.error("Mini-course delete error:", err);
+    res.status(500).json({ error: "Error al eliminar mini-curso" });
+  }
+});
+
+// Progreso de mini-curso
+app.post("/api/mini-courses/:miniCourseId/level/:levelId/complete", authenticateToken, async (req, res) => {
+  try {
+    const { miniCourseId, levelId } = req.params;
+    const existing = await pool.query("SELECT id FROM user_mini_course_progress WHERE user_id = $1 AND mini_course_level_id = $2", [req.user.id, levelId]);
+    if (existing.rows.length === 0) {
+      await pool.query("INSERT INTO user_mini_course_progress (user_id, mini_course_level_id, completed_at) VALUES ($1, $2, NOW())", [req.user.id, levelId]);
+    }
+    res.json({ message: "Nivel de mini-curso completado" });
+  } catch (err) {
+    console.error("Mini-course level complete error:", err);
+    res.status(500).json({ error: "Error al marcar nivel como completado" });
+  }
+});
+
 // Course detail & progress
 app.get("/api/course/:id", authenticateToken, async (req, res) => {
   try {
@@ -701,7 +910,7 @@ app.use("*", (req, res) => {
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Advanced Homelearn Server running on port ${PORT}`);
   console.log(`📚 Features: Auth, Courses, Social, Admin, Real-time`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🔗 Health check: http://192.168.0.6:${PORT}/api/health`);
 });
 
 // Graceful shutdown
