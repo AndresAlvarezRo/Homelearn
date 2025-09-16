@@ -28,6 +28,13 @@ async function safeJson(response) {
 }
 
 class ApiService {
+  // ---------- Mini-Cursos ----------
+  async uploadMiniCourse(file, levelId) {
+    const formData = new FormData()
+    formData.append("miniCourseFile", file)
+    // El backend espera el levelId en la URL, no en el body
+    return this.requestMultipart(`/levels/${levelId}/mini-course`, formData)
+  }
   constructor() {
     try {
       this.token = typeof window !== "undefined" ? localStorage.getItem("token") : null
