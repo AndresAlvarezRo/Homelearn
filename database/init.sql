@@ -1,28 +1,15 @@
--- Initialize homelearn database schema
+-- Initialize homelearn database schema (courses + social).
+-- The `users` table and its sequence/index live in Centro-Hogar
+-- (migrations/00_users.sql), which is mounted into this Postgres init-dir
+-- first, so the FKs below resolve on a fresh volume.
 
--- Drop existing tables if they exist (for clean restart)
+-- Drop existing tables if they exist (for clean restart). Never drop users:
+-- it's owned by Centro-Hogar.
 DROP TABLE IF EXISTS friendships CASCADE;
 DROP TABLE IF EXISTS user_progress CASCADE;
 DROP TABLE IF EXISTS user_enrollments CASCADE;
 DROP TABLE IF EXISTS course_levels CASCADE;
 DROP TABLE IF EXISTS courses CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
-
--- Create sequence for user codes
-CREATE SEQUENCE IF NOT EXISTS user_code_seq START 1;
-
--- Users table with all required columns
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    is_admin BOOLEAN DEFAULT FALSE,
-    user_code VARCHAR(20) UNIQUE NOT NULL,
-    profile_pic VARCHAR(255),
-    biography TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 
 -- Courses table
 CREATE TABLE courses (
@@ -79,19 +66,14 @@ CREATE TABLE friendships (
     UNIQUE(user_id, friend_id)
 );
 
--- Create indexes
-CREATE INDEX idx_users_email ON users(email);
+-- Create indexes (idx_users_email lives in Centro-Hogar's 00_users.sql)
 CREATE INDEX idx_course_levels_course_id ON course_levels(course_id);
 CREATE INDEX idx_user_enrollments_user_id ON user_enrollments(user_id);
 CREATE INDEX idx_user_progress_user_id ON user_progress(user_id);
 CREATE INDEX idx_friendships_user_id ON friendships(user_id);
 
--- Insert default admin user (password: admin123) - CORRECT HASH
-INSERT INTO users (username, email, password_hash, is_admin, user_code, biography) 
-VALUES ('admin', 'admin@homelearn.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj3L6jLb4tye', TRUE, 'ADMIN001', 'System Administrator');
-
--- Insert sample course
-INSERT INTO courses (title, description, created_by) 
+-- Insert sample course (admin user is seeded by Centro-Hogar's 00_users.sql)
+INSERT INTO courses (title, description, created_by)
 VALUES ('Introducción a la Programación', 'Curso básico de programación para principiantes', 1);
 
 -- Insert sample course levels - FIXED COLUMN NAMES

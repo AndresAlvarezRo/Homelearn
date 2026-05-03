@@ -11,5 +11,32 @@
   <body>
     <noscript>Necesitas habilitar JavaScript para usar esta aplicación.</noscript>
     <div id="root"></div>
+    <script>
+      // SSO hand-off from Centro-Hogar portal: when the user opens HomeLearn
+      // through the portal, the URL carries #sso=<base64({token,user})>.
+      // We unpack it into localStorage *before* React boots so AuthContext
+      // sees a logged-in session, then strip the hash so it does not leak.
+      (function () {
+        try {
+          var hash = window.location.hash || "";
+          var match = hash.match(/(?:^#|&)sso=([^&]+)/);
+          if (!match) return;
+          var json = decodeURIComponent(escape(window.atob(match[1])));
+          var data = JSON.parse(json);
+          if (data && data.token) {
+            localStorage.setItem("token", data.token);
+            if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
+          }
+          var clean = hash.replace(/(?:^#|&)sso=[^&]+/, "");
+          if (clean === "#" || clean === "") {
+            history.replaceState(null, "", window.location.pathname + window.location.search);
+          } else {
+            history.replaceState(null, "", window.location.pathname + window.location.search + clean);
+          }
+        } catch (e) {
+          console.warn("SSO bootstrap failed:", e);
+        }
+      })();
+    </script>
   </body>
 </html>

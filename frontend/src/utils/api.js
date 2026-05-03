@@ -1,20 +1,29 @@
 // frontend/src/utils/api.js
 
-// Fallback LAN robusto: usa el hostname actual y puerto 5000 si no hay env
-const FALLBACK_HOST =
-  typeof window !== "undefined"
-    ? `${window.location.protocol}//${window.location.hostname}:5000`
-    : "http://192.168.0.6:5000"
+// Two backends:
+//  - homelearn-backend (:5000) → courses, levels, mini-courses, social
+//  - centro-hogar-backend (port 80, behind portal nginx) → auth, profile,
+//    admin/users, profile pic uploads
+// Both share the same JWT (same secret), so the token in localStorage works
+// against either host.
 
-// Base de la API (si hay REACT_APP_API_URL se usa, si no fallback)
-// Normalizamos para quitar slashes finales
+const PROTO =
+  typeof window !== "undefined" ? window.location.protocol : "http:"
+const HOSTNAME =
+  typeof window !== "undefined" ? window.location.hostname : "192.168.0.6"
+
+// Homelearn backend (courses)
+const FALLBACK_HOST = `${PROTO}//${HOSTNAME}:5000`
 export const API_BASE_URL = (process.env.REACT_APP_API_URL || `${FALLBACK_HOST}/api`).replace(/\/+$/, "")
-
-// Host de backend sin el sufijo /api (útil para imágenes y socket.io)
 export const API_HOST = API_BASE_URL.replace(/\/api$/, "")
 
-// Base para archivos subidos
-export const UPLOADS_BASE_URL = `${API_HOST}/uploads`
+// Centro-Hogar portal (auth/profile/admin). Configurable via REACT_APP_PORTAL_URL
+// in case the portal is exposed on a different host/port; default is port 80.
+export const PORTAL_BASE_URL = (process.env.REACT_APP_PORTAL_URL || `${PROTO}//${HOSTNAME}/api`).replace(/\/+$/, "")
+export const PORTAL_HOST = PORTAL_BASE_URL.replace(/\/api$/, "")
+
+// Profile pictures are served by the portal backend.
+export const UPLOADS_BASE_URL = `${PORTAL_HOST}/uploads`
 
 // Utilidad para parsear JSON seguro (maneja 204/304 o cuerpos vacíos)
 async function safeJson(response) {
@@ -67,12 +76,13 @@ class ApiService {
   }
 
   async request(endpoint, options = {}) {
-    const url = `${API_BASE_URL}${endpoint}`
+    const { baseUrl, ...rest } = options
+    const url = `${baseUrl || API_BASE_URL}${endpoint}`
     const config = {
       headers: this.getHeaders(),
       // Evita respuestas 304 que rompan el flujo con JSON vacío
       cache: "no-store",
-      ...options,
+      ...rest,
     }
 
     let response
@@ -89,10 +99,10 @@ class ApiService {
     return data
   }
 
-  async requestMultipart(endpoint, formData) {
-    const url = `${API_BASE_URL}${endpoint}`
+  async requestMultipart(endpoint, formData, options = {}) {
+    const url = `${options.baseUrl || API_BASE_URL}${endpoint}`
     const config = {
-      method: "POST",
+      method: options.method || "POST",
       headers: this.getMultipartHeaders(),
       body: formData,
     }
@@ -111,12 +121,13 @@ class ApiService {
     return data
   }
 
-  // ---------- Auth ----------
+  // ---------- Auth (portal) ----------
   async login(credentials) {
     try {
       const data = await this.request("/auth/login", {
         method: "POST",
         body: JSON.stringify(credentials),
+        baseUrl: PORTAL_BASE_URL,
       })
       if (data?.token) this.setToken(data.token)
       return { success: true, data }
@@ -130,6 +141,7 @@ class ApiService {
       const data = await this.request("/auth/register", {
         method: "POST",
         body: JSON.stringify(userData),
+        baseUrl: PORTAL_BASE_URL,
       })
       return { success: true, data }
     } catch (error) {
@@ -141,9 +153,9 @@ class ApiService {
     this.setToken(null)
   }
 
-  // ---------- Profile ----------
+  // ---------- Profile (portal) ----------
   async getProfile() {
-    return this.request("/profile")
+    return this.request("/profile", { baseUrl: PORTAL_BASE_URL })
   }
 
   /**
@@ -164,7 +176,7 @@ class ApiService {
       })
     }
 
-    const url = `${API_BASE_URL}/profile`
+    const url = `${PORTAL_BASE_URL}/profile`
     const config = {
       method: "PUT",
       headers: this.getMultipartHeaders(),
@@ -244,7 +256,8 @@ class ApiService {
 
   // ---------- Admin ----------
   async getUsers() {
-    return this.request("/admin/users")
+    // /admin/users moved to Centro-Hogar; /admin/logs still on Homelearn.
+    return this.request("/admin/users", { baseUrl: PORTAL_BASE_URL })
   }
 
   async getLogs() {

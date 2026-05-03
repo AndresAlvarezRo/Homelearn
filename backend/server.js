@@ -1,7 +1,6 @@
 // server.js
 const express = require("express");
 const cors = require("cors");
-const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
 const multer = require("multer");
@@ -12,7 +11,6 @@ const rateLimit = require("express-rate-limit");
 const compression = require("compression");
 const morgan = require("morgan");
 const { v4: uuidv4 } = require("uuid");
-const sharp = require("sharp");
 const http = require("http");
 const socketIo = require("socket.io");
 
@@ -161,10 +159,6 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
-const generateUserCode = () => "USER" + Math.random().toString(36).substr(2, 6).toUpperCase();
-const hashPassword = (p) => bcrypt.hash(p, 12);
-const comparePassword = (p, h) => bcrypt.compare(p, h);
-
 // ---------- Socket.IO rooms ----------
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
@@ -187,130 +181,9 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Auth
-app.post("/api/auth/register", async (req, res) => {
-  try {
-    const { username, email, password } = req.body || {};
-    if (!username || !email || !password) return res.status(400).json({ error: "All fields are required" });
-    if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });
-
-    const existing = await pool.query("SELECT id FROM users WHERE email = $1 OR username = $2", [email, username]);
-    if (existing.rows.length > 0) return res.status(400).json({ error: "User already exists" });
-
-    const hashed = await hashPassword(password);
-    const userCode = generateUserCode();
-    const ins = await pool.query(
-      "INSERT INTO users (username, email, password_hash, user_code) VALUES ($1, $2, $3, $4) RETURNING id, username, email, user_code, is_admin, created_at",
-      [username, email, hashed, userCode]
-    );
-    const user = ins.rows[0];
-
-    console.log("✅ User registered:", user.username);
-    res.status(201).json({
-      success: true,
-      message: "User registered successfully",
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        userCode: user.user_code,
-        isAdmin: user.is_admin,
-        createdAt: user.created_at,
-      },
-    });
-  } catch (err) {
-    console.error("Registration error:", err);
-    res.status(500).json({ error: "Registration failed" });
-  }
-});
-
-app.post("/api/auth/login", async (req, res) => {
-  try {
-    const { email, password } = req.body || {};
-    if (!email || !password) return res.status(400).json({ error: "Email and password are required" });
-
-    console.log("🔐 Login attempt for:", email);
-    const r = await pool.query(
-      "SELECT id, username, email, password_hash, user_code, is_admin, profile_pic, biography, created_at FROM users WHERE email = $1",
-      [email]
-    );
-    if (r.rows.length === 0) return res.status(401).json({ error: "Invalid credentials" });
-
-    const user = r.rows[0];
-    const ok = await comparePassword(password, user.password_hash);
-    if (!ok) return res.status(401).json({ error: "Invalid credentials" });
-
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "7d" });
-    console.log("✅ Login successful:", user.username, "Admin:", user.is_admin);
-
-    res.json({
-      success: true,
-      message: "Login successful",
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        userCode: user.user_code,
-        isAdmin: user.is_admin,
-        profilePic: user.profile_pic,
-        biography: user.biography,
-        createdAt: user.created_at,
-      },
-    });
-  } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ error: "Login failed" });
-  }
-});
-
-// Profile
-app.get("/api/profile", authenticateToken, (req, res) => {
-  res.json({
-    id: req.user.id,
-    username: req.user.username,
-    email: req.user.email,
-    userCode: req.user.user_code,
-    isAdmin: req.user.is_admin,
-    profilePic: req.user.profile_pic,
-    biography: req.user.biography,
-    createdAt: req.user.created_at,
-  });
-});
-
-app.put("/api/profile", authenticateToken, upload.single("profilePic"), async (req, res) => {
-  try {
-    const { username, biography } = req.body || {};
-    let profilePicPath = req.user.profile_pic;
-
-    const finalUsername = username && username.trim() ? username.trim() : req.user.username || `User_${req.user.id}`;
-
-    if (req.file) {
-      const processedImagePath = path.join(UPLOAD_DIR, `profile-${req.user.id}-${Date.now()}.jpg`);
-      await sharp(req.file.path).resize(200, 200).jpeg({ quality: 80 }).toFile(processedImagePath);
-      try {
-        fs.unlinkSync(req.file.path);
-      } catch {}
-      // Guardamos ruta relativa "uploads/xxx.jpg" para que el cliente la anteponga a /uploads
-      profilePicPath = path.relative(__dirname, processedImagePath).replace(/\\/g, "/");
-    }
-
-    const upd = await pool.query(
-      "UPDATE users SET username = $1, biography = $2, profile_pic = $3 WHERE id = $4 RETURNING username, biography, profile_pic",
-      [finalUsername, biography || null, profilePicPath, req.user.id]
-    );
-
-    res.json({
-      message: "Profile updated successfully",
-      username: upd.rows[0].username,
-      biography: upd.rows[0].biography,
-      profile_pic: upd.rows[0].profile_pic,
-    });
-  } catch (err) {
-    console.error("Profile update error:", err);
-    res.status(500).json({ error: "Failed to update profile" });
-  }
-});
+// Auth, profile, and admin/users live in Centro-Hogar (portal-backend:6000).
+// Homelearn keeps authenticateToken/requireAdmin to gate its own routes against
+// the shared JWT and the same `users` table.
 
 // Courses (list & mine)
 app.get("/api/courses", authenticateToken, async (req, res) => {
@@ -861,26 +734,7 @@ app.delete("/api/courses/:id", authenticateToken, async (req, res) => {
   }
 });
 
-// Admin
-app.get("/api/admin/users", authenticateToken, requireAdmin, async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT u.id, u.username, u.email, u.user_code, u.is_admin, u.created_at,
-             COUNT(DISTINCT ue.course_id) as enrolled_courses,
-             COUNT(DISTINCT up.id) as completed_levels
-      FROM users u
-      LEFT JOIN user_enrollments ue ON u.id = ue.user_id
-      LEFT JOIN user_progress up ON u.id = up.user_id
-      GROUP BY u.id, u.username, u.email, u.user_code, u.is_admin, u.created_at
-      ORDER BY u.created_at DESC
-    `);
-    res.json(result.rows);
-  } catch (err) {
-    console.error("Admin users fetch error:", err);
-    res.status(500).json({ error: "Failed to fetch users" });
-  }
-});
-
+// Admin (/api/admin/users moved to Centro-Hogar; only /api/admin/logs stays)
 app.get("/api/admin/logs", authenticateToken, requireAdmin, (req, res) => {
   try {
     const logs = [
